@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Plateforme professionnelle de gestion de stock avec scanner QR">
+    <meta name="keywords" content="gestion de stock, inventaire, QR code, administration">
+    <meta name="author" content="xAI">
+    <title>Plateforme de Gestion de Stock</title>
+    <link rel="icon" type="image/png" href="https://placehold.co/32x32?text=📦">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f4f5f7;
+            min-height: 100vh;
+            color: #1f2937;
+            line-height: 1.5;
+            font-size: 0.875rem;
+            font-weight: 400;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Card Component */
+        .card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 400;
+        }
+
+        /* Form Styles */
+        .login-form {
+            max-width: 360px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 400;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Button Styles */
+        .btn {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s ease, transform 0.2s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-success {
+            background: #059669;
+        }
+
+        .btn-success:hover {
+            background: #047857;
+        }
+
+        .btn-warning {
+            background: #d97706;
+        }
+
+        .btn-warning:hover {
+            background: #b45309;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        /* User Info */
+        .user-info {
+            background: #f9fafb;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px;
+            border-left: 3px solid #2563eb;
+        }
+
+        .user-badge {
+            background: #2563eb;
+            color: #fff;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            border-radius: 4px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 16px;
+            background: #f9fafb;
+            padding: 6px;
+            border-radius: 6px;
+            gap: 6px;
+        }
+
+        .tab {
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: #6b7280;
+            transition: background 0.2s ease, color 0.2s ease;
+            flex: 1;
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        .tab.active {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Catalog */
+        .category {
+            margin-bottom: 24px;
+        }
+
+        .category h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            position: relative;
+        }
+
+        .category h3::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 40px;
+            height: 1px;
+            background: #2563eb;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .item-card {
+            background: #fff;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .item-card:hover {
+            border-color: #2563eb;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .item-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            background: #f3f4f6;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .item-name {
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .item-quantity {
+            background: #059669;
+            color: #fff;
+            padding: 4px 8px;
+            font-weight: 500;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        .item-quantity.low {
+            background: #d97706;
+        }
+
+        .item-quantity.out {
+            background: #dc2626;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 0.75rem;
+        }
+
+        /* Search and Filters */
+        .search-bar {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 0.875rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            background: #fff;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        .filter-section {
+            background: #f9fafb;
+            padding: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            border-radius: 6px;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .filter-group label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        /* Transactions */
+        .transaction-item {
+            background: #fff;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid #2563eb;
+            border-radius: 4px;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .transaction-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .transaction-user {
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .transaction-date {
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+
+        .transaction-details {
+            font-size: 0.75rem;
+            color: #4b5563;
+        }
+
+        /* QR Section */
+        .qr-section {
+            text-align: center;
+            padding: 16px;
+        }
+
+        .qr-code {
+            margin: 16px 0;
+            padding: 12px;
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Statistics */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: #2563eb;
+            color: #fff;
+            padding: 16px;
+            text-align: center;
+            border-radius: 6px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        /* Scanner */
+        .scanner-section {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .camera-container {
+            max-width: 320px;
+            margin: 12px auto;
+        }
+
+        #qr-video {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border: 1px solid #2563eb;
+            border-radius: 4px;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            padding: 10px 16px;
+            color: #fff;
+            font-weight: 500;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            z-index: 2000;
+            animation: slideInRight 0.2s ease;
+        }
+
+        .notification.success {
+            background: #059669;
+        }
+
+        .notification.error {
+            background: #dc2626;
+        }
+
+        .notification.warning {
+            background: #d97706;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            background: #fef3c7;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: 6px;
+            border-left: 3px solid #d97706;
+        }
+
+        .admin-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 0.8s linear infinite;
+            z-index: 3000;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .items-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .item-actions {
+                flex-direction: column;
+            }
+
+            .filter-section {
+                flex-direction: column;
+            }
+        }
+
+        /* User List in Modal */
+        .user-list {
+            margin-top: 12px;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-spinner" id="loadingSpinner"></div>
+    <div class="container">
+        <!-- Login Section -->
+        <div id="loginSection" class="card">
+            <div class="header">
+                <h1>📦 Gestion de Stock</h1>
+                <p>Plateforme professionnelle de gestion d'inventaire</p>
+            </div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="username">Nom d'utilisateur</label>
+                    <input type="text" id="username" placeholder="Entrez votre nom d'utilisateur" aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" placeholder="Entrez votre mot de passe" aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="role">Rôle</label>
+                    <select id="role" aria-label="Sélectionner un rôle">
+                        <option value="user">Utilisateur</option>
+                        <option value="admin">Administrateur</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="StockApp.auth.login()">Se connecter</button>
+                <button class="btn btn-secondary" onclick="StockApp.auth.showRegister()">Créer un compte</button>
+            </div>
+        </div>
+
+        <!-- Register Section -->
+        <div id="registerSection" class="card" style="display: none;">
+            <div class="header">
+                <h1>Créer un compte</h1>
+                <p>Inscription à la plateforme</p>
+            </div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="newUsername">Nom d'utilisateur</label>
+                    <input type="text" id="newUsername" placeholder="Choisissez un nom d'utilisateur" aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">Mot de passe</label>
+                    <input type="password" id="newPassword" placeholder="Choisissez un mot de passe" aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="newRole">Rôle</label>
+                    <select id="newRole" aria-label="Sélectionner un rôle">
+                        <option value="user">Utilisateur</option>
+                        <option value="admin">Administrateur</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="StockApp.auth.register()">Créer le compte</button>
+                <button class="btn btn-secondary" onclick="StockApp.auth.showLogin()">Retour à la connexion</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" class="dashboard">
+            <div class="card">
+                <div class="user-info">
+                    <div>
+                        <strong>Connecté en tant que: <span id="currentUser"></span></strong>
+                        <span id="currentRole" class="user-badge"></span>
+                    </div>
+                    <button class="btn btn-danger" onclick="StockApp.auth.logout()">Déconnexion</button>
+                </div>
+
+                <!-- Admin Panel -->
+                <div id="adminPanel" class="admin-panel" style="display: none;">
+                    <h3>🔧 Panneau Administrateur</h3>
+                    <p>Fonctionnalités avancées de gestion</p>
+                    <div class="admin-actions">
+                        <button class="btn btn-warning btn-small" onclick="StockApp.admin.exportData()">Exporter Données</button>
+                        <button class="btn btn-warning btn-small" onclick="StockApp.admin.importData()">Importer Données</button>
+                        <button class="btn btn-warning btn-small" onclick="StockApp.admin.resetStock()">Réinitialiser Stock</button>
+                        <button class="btn btn-warning btn-small" onclick="StockApp.admin.openAddProductModal()">Ajouter Produit</button>
+                        <button class="btn btn-warning btn-small" onclick="StockApp.admin.openManageUsersModal()">Gérer Utilisateurs</button>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalItems">0</div>
+                        <div class="stat-label">Articles Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="lowStockItems">0</div>
+                        <div class="stat-label">Stock Faible</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="outOfStockItems">0</div>
+                        <div class="stat-label">Rupture de Stock</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTransactions">0</div>
+                        <div class="stat-label">Transactions</div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" onclick="StockApp.ui.showTab('catalog')">📦 Catalogue</button>
+                    <button class="tab" onclick="StockApp.ui.showTab('scanner')">📱 Scanner QR</button>
+                    <button class="tab" onclick="StockApp.ui.showTab('history')">📊 Historique</button>
+                    <button class="tab" onclick="StockApp.ui.showTab('qr')">🔗 Codes QR</button>
+                </div>
+
+                <!-- Catalog Tab -->
+                <div id="catalogTab" class="tab-content active">
+                    <div class="filter-section">
+                        <div class="filter-group">
+                            <label>Recherche</label>
+                            <input type="text" id="searchBar" placeholder="Rechercher un article..." onkeyup="StockApp.catalog.searchItems()" aria-label="Rechercher un article">
+                        </div>
+                        <div class="filter-group">
+                            <label>Catégorie</label>
+                            <select id="categoryFilter" onchange="StockApp.catalog.filterItems()" aria-label="Filtrer par catégorie">
+                                <option value="">Toutes les catégories</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Stock</label>
+                            <select id="stockFilter" onchange="StockApp.catalog.filterItems()" aria-label="Filtrer par stock">
+                                <option value="">Tous les stocks</option>
+                                <option value="available">Disponible</option>
+                                <option value="low">Stock faible</option>
+                                <option value="out">Rupture</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="catalogContent"></div>
+                </div>
+
+                <!-- Scanner Tab -->
+                <div id="scannerTab" class="tab-content">
+                    <div class="scanner-section">
+                        <h2>📱 Scanner QR Code</h2>
+                        <p>Scannez le QR code d'un article pour le retourner au stock de manière rapide et sécurisée. Cela permet de mettre à jour l'inventaire automatiquement lors du retour d'articles empruntés.</p>
+                        <div class="camera-container">
+                            <video id="qr-video" style="display: none;"></video>
+                            <div id="scanner-placeholder">
+                                <p>Cliquez sur "Démarrer Scanner" pour activer la caméra</p>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <button class="btn btn-success" id="startScanBtn" onclick="StockApp.qr.startScanner()">Démarrer Scanner</button>
+                            <button class="btn btn-danger" id="stopScanBtn" onclick="StockApp.qr.stopScanner()" style="display: none;">Arrêter Scanner</button>
+                        </div>
+                        <div id="scanResult" style="margin-top: 12px; display: none;">
+                            <h3>Article scanné:</h3>
+                            <p id="scannedItem"></p>
+                            <button class="btn btn-success" onclick="StockApp.qr.returnScannedItem()">Retourner au Stock</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Tab -->
+                <div id="historyTab" class="tab-content">
+                    <div class="filter-section">
+                        <div class="filter-group">
+                            <label>Utilisateur</label>
+                            <select id="userFilter" onchange="StockApp.transactions.filterTransactions()" aria-label="Filtrer par utilisateur">
+                                <option value="">Tous les utilisateurs</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Action</label>
+                            <select id="actionFilter" onchange="StockApp.transactions.filterTransactions()" aria-label="Filtrer par action">
+                                <option value="">Toutes les actions</option>
+                                <option value="taken">Pris</option>
+                                <option value="added">Ajouté</option>
+                                <option value="returned">Retourné</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Date</label>
+                            <input type="date" id="dateFilter" onchange="StockApp.transactions.filterTransactions()" aria-label="Filtrer par date">
+                        </div>
+                    </div>
+                    <h2>📊 Historique des Transactions</h2>
+                    <div id="transactionHistory"></div>
+                </div>
+
+                <!-- QR Tab -->
+                <div id="qrTab" class="tab-content">
+                    <div class="qr-section">
+                        <h2>🔗 Générateur de Codes QR</h2>
+                        <p>Générez des codes QR pour les articles afin de faciliter le retour via scanner.</p>
+                        <div class="form-group">
+                            <label for="qrItemSelect">Sélectionner un article</label>
+                            <select id="qrItemSelect" onchange="StockApp.qr.generateQR()" aria-label="Sélectionner un article pour QR">
+                                <option value="">Choisir un article...</option>
+                            </select>
+                        </div>
+                        <div class="qr-code" id="qrCode"></div>
+                        <div id="qrActions" style="display: none; margin-top: 12px;">
+                            <button class="btn btn-success btn-small" onclick="StockApp.qr.downloadQR()">Télécharger QR</button>
+                            <button class="btn btn-secondary btn-small" onclick="StockApp.qr.printQR()">Imprimer QR</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Take Item Modal -->
+        <div id="takeItemModal" class="modal">
+            <div class="modal-content">
+                <h2>📦 Prendre un article</h2>
+                <p>Article: <strong id="modalItemName"></strong></p>
+                <p>Stock disponible: <strong id="modalItemStock"></strong></p>
+                <div class="form-group">
+                    <label for="quantityToTake">Quantité à prendre</label>
+                    <input type="number" id="quantityToTake" min="1" value="1" aria-label="Quantité à prendre">
+                </div>
+                <div class="form-group">
+                    <label for="takeReason">Raison (optionnel)</label>
+                    <input type="text" id="takeReason" placeholder="Pourquoi prenez-vous cet article?" aria-label="Raison de la prise">
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <button class="btn btn-success" onclick="StockApp.catalog.confirmTakeItem()">Confirmer</button>
+                    <button class="btn btn-secondary" onclick="StockApp.ui.closeModal()">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Return Item Modal -->
+        <div id="returnItemModal" class="modal">
+            <div class="modal-content">
+                <h2>↩️ Retourner un article</h2>
+                <p>Article: <strong id="returnModalItemName"></strong></p>
+                <p>Stock actuel: <strong id="returnModalItemStock"></strong></p>
+                <div class="form-group">
+                    <label for="quantityToReturn">Quantité à retourner</label>
+                    <input type="number" id="quantityToReturn" min="1" value="1" aria-label="Quantité à retourner">
+                </div>
+                <div class="form-group">
+                    <label for="returnReason">Raison du retour</label>
+                    <input type="text" id="returnReason" placeholder="Pourquoi retournez-vous cet article?" aria-label="Raison du retour">
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <button class="btn btn-success" onclick="StockApp.catalog.confirmReturnItem()">Confirmer Retour</button>
+                    <button class="btn btn-secondary" onclick="StockApp.ui.closeModal()">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Product Modal -->
+        <div id="addProductModal" class="modal">
+            <div class="modal-content">
+                <h2>➕ Ajouter un Nouveau Produit</h2>
+                <div class="form-group">
+                    <label for="newProductCategory">Catégorie</label>
+                    <select id="newProductCategory" aria-label="Sélectionner une catégorie">
+                        <option value="">Sélectionner une catégorie</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="newProductName">Nom du produit</label>
+                    <input type="text" id="newProductName" placeholder="Nom du produit" aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="newProductQuantity">Quantité initiale</label>
+                    <input type="number" id="newProductQuantity" min="0" value="0" aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="newProductMaxQuantity">Quantité maximale</label>
+                    <input type="number" id="newProductMaxQuantity" min="1" value="30" aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="newProductImage">URL de l'image (optionnel)</label>
+                    <input type="text" id="newProductImage" placeholder="https://example.com/image.jpg">
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <button class="btn btn-success" onclick="StockApp.admin.confirmAddProduct()">Ajouter</button>
+                    <button class="btn btn-secondary" onclick="StockApp.ui.closeModal()">Annuler</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manage Users Modal -->
+        <div id="manageUsersModal" class="modal">
+            <div class="modal-content">
+                <h2>👥 Gérer les Utilisateurs</h2>
+                <div class="user-list" id="userList"></div>
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <button class="btn btn-secondary" onclick="StockApp.ui.closeModal()">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Stock Management App
+        const StockApp = {
+            // Initial stock data with max_quantity
+            data: {
+                initialStock: {
+                    "Bureau SAC": [
+                        { name: "Porte nom petit", quantity: 11, max_quantity: 30, image: "https://placehold.co/280x120?text=Porte+nom+petit" },
+                        { name: "Porte nom grand", quantity: 6, max_quantity: 30, image: "https://placehold.co/280x120?text=Porte+nom+grand" }
+                    ],
+                    "Jeux": [
+                        { name: "Water guns", quantity: 4, max_quantity: 30, image: "https://placehold.co/280x120?text=Water+guns" },
+                        { name: "Ballon", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=Ballon" },
+                        { name: "Cerceaux", quantity: 10, max_quantity: 30, image: "https://placehold.co/280x120?text=Cerceaux" },
+                        { name: "Carte", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=Carte" },
+                        { name: "Buzzers", quantity: 3, max_quantity: 30, image: "https://placehold.co/280x120?text=Buzzers" }
+                    ],
+                    "Papeterie": [
+                        { name: "Deli blue (paquet)", quantity: 4, max_quantity: 30, image: "https://placehold.co/280x120?text=Deli+blue" },
+                        { name: "Monami Green (paquet)", quantity: 4, max_quantity: 30, image: "https://placehold.co/280x120?text=Monami+Green" },
+                        { name: "Monami black (paquet)", quantity: 3, max_quantity: 30, image: "https://placehold.co/280x120?text=Monami+black" },
+                        { name: "Marqueur Monami red (paquet)", quantity: 4, max_quantity: 30, image: "https://placehold.co/280x120?text=Marqueur+Monami+red" },
+                        { name: "Punaises (paquet)", quantity: 4, max_quantity: 30, image: "https://placehold.co/280x120?text=Punaises" },
+                        { name: "Ardoise", quantity: 37, max_quantity: 50, image: "https://placehold.co/280x120?text=Ardoise" },
+                        { name: "Roll up", quantity: 8, max_quantity: 30, image: "https://placehold.co/280x120?text=Roll+up" },
+                        { name: "Stylos (paquet)", quantity: 3, max_quantity: 30, image: "https://placehold.co/280x120?text=Stylos" },
+                        { name: "Crayons (paquet)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=Crayons" },
+                        { name: "Feutres (paquet)", quantity: 3, max_quantity: 30, image: "https://placehold.co/280x120?text=Feutres" },
+                        { name: "Ramettes A4", quantity: 8, max_quantity: 30, image: "https://placehold.co/280x120?text=Ramettes+A4" },
+                        { name: "Ramettes A3", quantity: 4, max_quantity: 30, image: "https://placehold.co/280x120?text=Ramettes+A3" },
+                        { name: "Paper cutter", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=Paper+cutter" },
+                        { name: "Post it (paquet)", quantity: 5, max_quantity: 30, image: "https://placehold.co/280x120?text=Post+it" }
+                    ],
+                    "Peinture": [
+                        { name: "FB tablier enfant", quantity: 23, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+tablier+enfant" },
+                        { name: "Painting Knife", quantity: 9, max_quantity: 30, image: "https://placehold.co/280x120?text=Painting+Knife" },
+                        { name: "FB (rouge carmin)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+rouge+carmin" },
+                        { name: "FB (vert émeraude)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+vert+émeraude" },
+                        { name: "FB (vert phtalocyanine)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+vert+phtalocyanine" },
+                        { name: "FB (magenta)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+magenta" },
+                        { name: "FB (bleu outre-mer)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+bleu+outre-mer" },
+                        { name: "FB (ocre rose)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+ocre+rose" },
+                        { name: "FB (argent)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+argent" },
+                        { name: "FB (violet pale)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+violet+pale" },
+                        { name: "FB (rose)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+rose" },
+                        { name: "FB (vert veronese)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+vert+veronese" },
+                        { name: "FB gouache (bleu truquoise)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+gouache+bleu+truquoise" },
+                        { name: "FB gouache (rose tyrien)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+gouache+rose+tyrien" },
+                        { name: "FB gouache (rouge primaire)", quantity: 4, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+gouache+rouge+primaire" },
+                        { name: "FB gouache (orange)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+gouache+orange" },
+                        { name: "FB gouache (vert brillant)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+gouache+vert+brillant" },
+                        { name: "FB gouache (vert claire)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+gouache+vert+claire" },
+                        { name: "FB glossy acrylique (vert anis)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+glossy+acrylique+vert+anis" },
+                        { name: "FB glossy acrylique (pêche)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+glossy+acrylique+pêche" },
+                        { name: "FB glossy acrylique (rose)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+glossy+acrylique+rose" },
+                        { name: "FB glossy acrylique (violet)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+glossy+acrylique+violet" },
+                        { name: "FB glossy acrylique (terre de sienne brûlée)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+glossy+acrylique+terre+de+sienne+brûlée" },
+                        { name: "FB glossy acrylique (orange)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+glossy+acrylique+orange" },
+                        { name: "FB glossy acrylique (bleu turquoise)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=FB+glossy+acrylique+bleu+turquoise" },
+                        { name: "DR acrylique (bleu primaire)", quantity: 5, max_quantity: 30, image: "https://placehold.co/280x120?text=DR+acrylique+bleu+primaire" },
+                        { name: "DR acrylique (jaune primaire)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=DR+acrylique+jaune+primaire" },
+                        { name: "DR acrylique (blanc de titane)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=DR+acrylique+blanc+de+titane" },
+                        { name: "DR acrylique (rouge primaire)", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=DR+acrylique+rouge+primaire" },
+                        { name: "Pinceaux (paquet)", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=Pinceaux" },
+                        { name: "Chevallet", quantity: 14, max_quantity: 30, image: "https://placehold.co/280x120?text=Chevallet" },
+                        { name: "Palletes", quantity: 9, max_quantity: 30, image: "https://placehold.co/280x120?text=Palletes" }
+                    ],
+                    "Musique": [
+                        { name: "Qriqibat", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=Qriqibat" },
+                        { name: "Ukulele", quantity: 4, max_quantity: 30, image: "https://placehold.co/280x120?text=Ukulele" },
+                        { name: "Table DJ roland", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=Table+DJ+roland" },
+                        { name: "Casque audio technica", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=Casque+audio+technica" }
+                    ],
+                    "Eclairage": [
+                        { name: "Système d'éclairage Algam", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=Système+d'éclairage+Algam" }
+                    ],
+                    "Sonorisation": [
+                        { name: "Baffles presonus", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=Baffles+presonus" }
+                    ],
+                    "Accessoires": [
+                        { name: "Petit tajine", quantity: 8, max_quantity: 30, image: "https://placehold.co/280x120?text=Petit+tajine" },
+                        { name: "Masque", quantity: 4, max_quantity: 30, image: "https://placehold.co/280x120?text=Masque" },
+                        { name: "Chandelle", quantity: 2, max_quantity: 30, image: "https://placehold.co/280x120?text=Chandelle" },
+                        { name: "paquets de popcorn", quantity: 16, max_quantity: 30, image: "https://placehold.co/280x120?text=Paquets+de+popcorn" },
+                        { name: "Assiette en carton", quantity: 30, max_quantity: 50, image: "https://placehold.co/280x120?text=Assiette+en+carton" },
+                        { name: "Gourde en argile avec son verre", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=Gourde+en+argile" },
+                        { name: "Guirlande LED", quantity: 1, max_quantity: 30, image: "https://placehold.co/280x120?text=Guirlande+LED" }
+                    ]
+                },
+                stock: JSON.parse(localStorage.getItem('stock')) || null,
+                users: JSON.parse(localStorage.getItem('users')) || [
+                    { username: 'admin', password: 'admin123', role: 'admin' },
+                    { username: 'user', password: 'user123', role: 'user' }
+                ],
+                transactions: JSON.parse(localStorage.getItem('transactions')) || [],
+                currentUser: null,
+                currentRole: null,
+                qrScanner: null,
+                currentScannedData: null,
+                currentQRData: null,
+                currentTakeItem: null,
+                currentReturnItem: null
+            },
+
+            // Utility functions
+            utils: {
+                saveData() {
+                    localStorage.setItem('stock', JSON.stringify(StockApp.data.stock));
+                    localStorage.setItem('users', JSON.stringify(StockApp.data.users));
+                    localStorage.setItem('transactions', JSON.stringify(StockApp.data.transactions));
+                },
+                showNotification(message, type = 'success') {
+                    const notification = document.createElement('div');
+                    notification.className = `notification ${type}`;
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    setTimeout(() => notification.remove(), 3000);
+                },
+                showLoading(show = true) {
+                    document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+                }
+            },
+
+            // Authentication functions
+            auth: {
+                showRegister() {
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('registerSection').style.display = 'block';
+                },
+                showLogin() {
+                    document.getElementById('registerSection').style.display = 'none';
+                    document.getElementById('loginSection').style.display = 'block';
+                },
+                register() {
+                    const username = document.getElementById('newUsername').value.trim();
+                    const password = document.getElementById('newPassword').value.trim();
+                    const role = document.getElementById('newRole').value;
+
+                    if (!username || !password) {
+                        StockApp.utils.showNotification('Veuillez remplir tous les champs', 'error');
+                        return;
+                    }
+
+                    if (StockApp.data.users.find(u => u.username === username)) {
+                        StockApp.utils.showNotification('Ce nom d\'utilisateur existe déjà', 'error');
+                        return;
+                    }
+
+                    StockApp.data.users.push({ username, password, role });
+                    StockApp.utils.saveData();
+                    StockApp.utils.showNotification('Compte créé avec succès!', 'success');
+                    StockApp.auth.showLogin();
+                },
+                login() {
+                    const username = document.getElementById('username').value.trim();
+                    const password = document.getElementById('password').value.trim();
+
+                    const user = StockApp.data.users.find(u => u.username === username && u.password === password);
+                    if (user) {
+                        StockApp.data.currentUser = user.username;
+                        StockApp.data.currentRole = user.role;
+                        localStorage.setItem('currentUser', user.username);
+                        localStorage.setItem('currentRole', user.role);
+
+                        document.getElementById('loginSection').style.display = 'none';
+                        document.getElementById('registerSection').style.display = 'none';
+                        document.getElementById('dashboardSection').classList.add('active');
+                        document.getElementById('currentUser').textContent = user.username;
+                        document.getElementById('currentRole').textContent = user.role.toUpperCase();
+
+                        if (user.role === 'admin') {
+                            document.getElementById('adminPanel').style.display = 'block';
+                        }
+
+                        StockApp.dashboard.load();
+                        StockApp.utils.showNotification(`Bienvenue ${user.username}!`, 'success');
+                    } else {
+                        StockApp.utils.showNotification('Nom d\'utilisateur ou mot de passe incorrect', 'error');
+                    }
+                },
+                logout() {
+                    StockApp.data.currentUser = null;
+                    StockApp.data.currentRole = null;
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('currentRole');
+
+                    document.getElementById('dashboardSection').classList.remove('active');
+                    document.getElementById('loginSection').style.display = 'block';
+                    document.getElementById('adminPanel').style.display = 'none';
+                    document.getElementById('username').value = '';
+                    document.getElementById('password').value = '';
+
+                    if (StockApp.data.qrScanner) {
+                        StockApp.qr.stopScanner();
+                    }
+
+                    StockApp.utils.showNotification('Déconnexion réussie', 'success');
+                }
+            },
+
+            // Dashboard functions
+            dashboard: {
+                load() {
+                    StockApp.utils.showLoading(true);
+                    StockApp.data.stock = StockApp.data.stock || JSON.parse(JSON.stringify(StockApp.data.initialStock));
+                    StockApp.catalog.load();
+                    StockApp.transactions.load();
+                    StockApp.qr.loadSelect();
+                    StockApp.filters.load();
+                    StockApp.stats.update();
+                    StockApp.utils.showLoading(false);
+                }
+            },
+
+            // Statistics functions
+            stats: {
+                update() {
+                    let totalItems = 0;
+                    let lowStockItems = 0;
+                    let outOfStockItems = 0;
+
+                    Object.values(StockApp.data.stock).forEach(category => {
+                        category.forEach(item => {
+                            totalItems++;
+                            if (item.quantity === 0) outOfStockItems++;
+                            else if (item.quantity <= 3) lowStockItems++;
+                        });
+                    });
+
+                    document.getElementById('totalItems').textContent = totalItems;
+                    document.getElementById('lowStockItems').textContent = lowStockItems;
+                    document.getElementById('outOfStockItems').textContent = outOfStockItems;
+                    document.getElementById('totalTransactions').textContent = StockApp.data.transactions.length;
+                }
+            },
+
+            // Catalog functions
+            catalog: {
+                load() {
+                    const catalogContent = document.getElementById('catalogContent');
+                    catalogContent.innerHTML = '';
+
+                    Object.entries(StockApp.data.stock).forEach(([categoryName, items]) => {
+                        const categoryDiv = document.createElement('div');
+                        categoryDiv.className = 'category';
+                        categoryDiv.setAttribute('data-category', categoryName);
+                        categoryDiv.innerHTML = `
+                            <h3>${categoryName}</h3>
+                            <div class="items-grid">
+                                ${items.map(item => `
+                                    <div class="item-card" data-item-name="${item.name.toLowerCase()}" data-stock-status="${item.quantity === 0 ? 'out' : item.quantity <= 3 ? 'low' : 'available'}">
+                                        <img src="${item.image}" alt="${item.name}" class="item-image">
+                                        <div class="item-header">
+                                            <div class="item-name">${item.name}</div>
+                                            <div class="item-quantity ${item.quantity === 0 ? 'out' : item.quantity <= 3 ? 'low' : ''}">${item.quantity}/${item.max_quantity}</div>
+                                        </div>
+                                        <div class="item-actions">
+                                            <button class="btn btn-small btn-success" onclick="StockApp.catalog.openTakeModal('${categoryName}', '${item.name}')" ${item.quantity === 0 ? 'disabled' : ''}>
+                                                📦 Prendre
+                                            </button>
+                                            <button class="btn btn-small btn-warning" onclick="StockApp.catalog.openReturnModal('${categoryName}', '${item.name}')">
+                                                ↩️ Retourner
+                                            </button>
+                                            ${StockApp.data.currentRole === 'admin' ? `
+                                                <button class="btn btn-small" onclick="StockApp.catalog.addStock('${categoryName}', '${item.name}')">
+                                                    ➕ Ajouter Stock
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                        catalogContent.appendChild(categoryDiv);
+                    });
+                },
+                openTakeModal(category, itemName) {
+                    const item = StockApp.data.stock[category].find(i => i.name === itemName);
+                    document.getElementById('modalItemName').textContent = itemName;
+                    document.getElementById('modalItemStock').textContent = `${item.quantity}/${item.max_quantity}`;
+                    document.getElementById('quantityToTake').max = item.quantity;
+                    document.getElementById('quantityToTake').value = 1;
+                    document.getElementById('takeReason').value = '';
+                    document.getElementById('takeItemModal').classList.add('active');
+                    StockApp.data.currentTakeItem = { category, itemName };
+                },
+                openReturnModal(category, itemName) {
+                    const item = StockApp.data.stock[category].find(i => i.name === itemName);
+                    document.getElementById('returnModalItemName').textContent = itemName;
+                    document.getElementById('returnModalItemStock').textContent = `${item.quantity}/${item.max_quantity}`;
+                    document.getElementById('quantityToReturn').value = 1;
+                    document.getElementById('quantityToReturn').max = item.max_quantity - item.quantity;
+                    document.getElementById('returnReason').value = '';
+                    document.getElementById('returnItemModal').classList.add('active');
+                    StockApp.data.currentReturnItem = { category, itemName };
+                },
+                confirmTakeItem() {
+                    const quantity = parseInt(document.getElementById('quantityToTake').value);
+                    const reason = document.getElementById('takeReason').value.trim();
+                    const { category, itemName } = StockApp.data.currentTakeItem;
+
+                    const item = StockApp.data.stock[category].find(i => i.name === itemName);
+                    if (quantity > item.quantity) {
+                        StockApp.utils.showNotification('Quantité insuffisante en stock', 'error');
+                        return;
+                    }
+
+                    item.quantity -= quantity;
+                    StockApp.data.transactions.unshift({
+                        user: StockApp.data.currentUser,
+                        item: itemName,
+                        category,
+                        quantity,
+                        date: new Date().toLocaleString('fr-FR'),
+                        action: 'taken',
+                        reason: reason || 'Non spécifiée'
+                    });
+
+                    StockApp.utils.saveData();
+                    StockApp.dashboard.load();
+                    StockApp.ui.closeModal();
+                    StockApp.utils.showNotification(`${quantity} ${itemName} pris(e) avec succès!`, 'success');
+                },
+                confirmReturnItem() {
+                    const quantity = parseInt(document.getElementById('quantityToReturn').value);
+                    const reason = document.getElementById('returnReason').value.trim();
+                    const { category, itemName } = StockApp.data.currentReturnItem;
+
+                    if (!reason) {
+                        StockApp.utils.showNotification('Veuillez spécifier la raison du retour', 'error');
+                        return;
+                    }
+
+                    const item = StockApp.data.stock[category].find(i => i.name === itemName);
+                    if (quantity + item.quantity > item.max_quantity) {
+                        StockApp.utils.showNotification('Quantité dépasse la capacité maximale', 'error');
+                        return;
+                    }
+
+                    item.quantity += quantity;
+                    StockApp.data.transactions.unshift({
+                        user: StockApp.data.currentUser,
+                        item: itemName,
+                        category,
+                        quantity,
+                        date: new Date().toLocaleString('fr-FR'),
+                        action: 'returned',
+                        reason
+                    });
+
+                    StockApp.utils.saveData();
+                    StockApp.dashboard.load();
+                    StockApp.ui.closeModal();
+                    StockApp.utils.showNotification(`${quantity} ${itemName} retourné(e) avec succès!`, 'success');
+                },
+                addStock(category, itemName) {
+                    const quantity = prompt('Quantité à ajouter:');
+                    if (quantity && !isNaN(quantity) && quantity > 0) {
+                        const item = StockApp.data.stock[category].find(i => i.name === itemName);
+                        if (parseInt(quantity) + item.quantity > item.max_quantity) {
+                            StockApp.utils.showNotification('Quantité dépasse la capacité maximale', 'error');
+                            return;
+                        }
+                        item.quantity += parseInt(quantity);
+                        StockApp.data.transactions.unshift({
+                            user: StockApp.data.currentUser,
+                            item: itemName,
+                            category,
+                            quantity: parseInt(quantity),
+                            date: new Date().toLocaleString('fr-FR'),
+                            action: 'added',
+                            reason: 'Réapprovisionnement'
+                        });
+                        StockApp.utils.saveData();
+                        StockApp.dashboard.load();
+                        StockApp.utils.showNotification(`${quantity} ${itemName} ajouté(e) au stock!`, 'success');
+                    }
+                },
+                searchItems() {
+                    StockApp.catalog.filterItems();
+                },
+                filterItems() {
+                    const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+                    const categoryFilter = document.getElementById('categoryFilter').value;
+                    const stockFilter = document.getElementById('stockFilter').value;
+
+                    document.querySelectorAll('.category').forEach(category => {
+                        const categoryName = category.getAttribute('data-category');
+                        let categoryVisible = false;
+
+                        if (categoryFilter && categoryName !== categoryFilter) {
+                            category.style.display = 'none';
+                            return;
+                        }
+
+                        category.querySelectorAll('.item-card').forEach(card => {
+                            const itemName = card.getAttribute('data-item-name');
+                            const stockStatus = card.getAttribute('data-stock-status');
+                            let visible = true;
+
+                            if (searchTerm && !itemName.includes(searchTerm)) visible = false;
+                            if (stockFilter && stockStatus !== stockFilter) visible = false;
+
+                            card.style.display = visible ? 'block' : 'none';
+                            if (visible) categoryVisible = true;
+                        });
+
+                        category.style.display = categoryVisible ? 'block' : 'none';
+                    });
+                }
+            },
+
+            // Transaction functions
+            transactions: {
+                load() {
+                    const historyDiv = document.getElementById('transactionHistory');
+                    historyDiv.innerHTML = '';
+
+                    if (!StockApp.data.transactions.length) {
+                        historyDiv.innerHTML = '<p>Aucune transaction enregistrée.</p>';
+                        return;
+                    }
+
+                    const filteredTransactions = StockApp.transactions.getFiltered();
+                    filteredTransactions.forEach(transaction => {
+                        const actionIcons = { taken: '📦', added: '➕', returned: '↩️' };
+                        const actionText = { taken: 'A pris', added: 'A ajouté', returned: 'A retourné' };
+
+                        const transactionDiv = document.createElement('div');
+                        transactionDiv.className = 'transaction-item';
+                        transactionDiv.innerHTML = `
+                            <div class="transaction-header">
+                                <div class="transaction-user">${actionIcons[transaction.action]} ${transaction.user}</div>
+                                <div class="transaction-date">${transaction.date}</div>
+                            </div>
+                            <div class="transaction-details">
+                                ${actionText[transaction.action]} ${transaction.quantity} ${transaction.item} (${transaction.category})
+                                ${transaction.reason ? `<br><small>Raison: ${transaction.reason}</small>` : ''}
+                            </div>
+                        `;
+                        historyDiv.appendChild(transactionDiv);
+                    });
+                },
+                getFiltered() {
+                    const userFilter = document.getElementById('userFilter').value;
+                    const actionFilter = document.getElementById('actionFilter').value;
+                    const dateFilter = document.getElementById('dateFilter').value;
+
+                    return StockApp.data.transactions.filter(transaction => {
+                        if (userFilter && transaction.user !== userFilter) return false;
+                        if (actionFilter && transaction.action !== actionFilter) return false;
+                        if (dateFilter) {
+                            const transactionDate = new Date(transaction.date.split(' ')[0].split('/').reverse().join('-'));
+                            const filterDate = new Date(dateFilter);
+                            if (transactionDate.toDateString() !== filterDate.toDateString()) return false;
+                        }
+                        return true;
+                    });
+                },
+                filterTransactions() {
+                    StockApp.transactions.load();
+                }
+            },
+
+            // Filter functions
+            filters: {
+                load() {
+                    const categoryFilter = document.getElementById('categoryFilter');
+                    categoryFilter.innerHTML = '<option value="">Toutes les catégories</option>';
+                    Object.keys(StockApp.data.stock).forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        categoryFilter.appendChild(option);
+                    });
+
+                    const userFilter = document.getElementById('userFilter');
+                    userFilter.innerHTML = '<option value="">Tous les utilisateurs</option>';
+                    const uniqueUsers = [...new Set(StockApp.data.transactions.map(t => t.user))];
+                    uniqueUsers.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user;
+                        option.textContent = user;
+                        userFilter.appendChild(option);
+                    });
+
+                    // Load categories for add product modal
+                    const newProductCategory = document.getElementById('newProductCategory');
+                    newProductCategory.innerHTML = '';
+                    Object.keys(StockApp.data.stock).forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        newProductCategory.appendChild(option);
+                    });
+                }
+            },
+
+            // QR Code functions
+            qr: {
+                loadSelect() {
+                    const select = document.getElementById('qrItemSelect');
+                    select.innerHTML = '<option value="">Choisir un article...</option>';
+                    Object.entries(StockApp.data.stock).forEach(([category, items]) => {
+                        items.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = `${category}|${item.name}`;
+                            option.textContent = `${item.name} (${category}) - Stock: ${item.quantity}/${item.max_quantity}`;
+                            select.appendChild(option);
+                        });
+                    });
+                },
+                generateQR() {
+                    const select = document.getElementById('qrItemSelect');
+                    const qrDiv = document.getElementById('qrCode');
+                    const qrActions = document.getElementById('qrActions');
+
+                    if (!select.value) {
+                        qrDiv.innerHTML = '';
+                        qrActions.style.display = 'none';
+                        return;
+                    }
+
+                    const [category, itemName] = select.value.split('|');
+                    const qrData = JSON.stringify({
+                        category,
+                        item: itemName,
+                        platform: 'Stock Management Pro',
+                        timestamp: new Date().toISOString(),
+                        user: StockApp.data.currentUser
+                    });
+
+                    qrDiv.innerHTML = '';
+                    QRCode.toCanvas(qrDiv, qrData, {
+                        width: 180,
+                        height: 180,
+                        colorDark: '#1f2937',
+                        colorLight: '#ffffff',
+                        margin: 2
+                    }, error => {
+                        if (error) {
+                            StockApp.utils.showNotification('Erreur lors de la génération du QR code', 'error');
+                        } else {
+                            qrActions.style.display = 'block';
+                            StockApp.data.currentQRData = { category, itemName, canvas: qrDiv.querySelector('canvas') };
+                        }
+                    });
+                },
+                downloadQR() {
+                    if (StockApp.data.currentQRData?.canvas) {
+                        const link = document.createElement('a');
+                        link.download = `QR_${StockApp.data.currentQRData.itemName.replace(/\s+/g, '_')}.png`;
+                        link.href = StockApp.data.currentQRData.canvas.toDataURL();
+                        link.click();
+                        StockApp.utils.showNotification('QR Code téléchargé!', 'success');
+                    }
+                },
+                printQR() {
+                    if (StockApp.data.currentQRData?.canvas) {
+                        const printWindow = window.open('', '_blank');
+                        printWindow.document.write(`
+                            <html>
+                                <head><title>QR Code - ${StockApp.data.currentQRData.itemName}</title></head>
+                                <body style="text-align: center; font-family: Arial, sans-serif;">
+                                    <h2>${StockApp.data.currentQRData.itemName}</h2>
+                                    <p>Catégorie: ${StockApp.data.currentQRData.category}</p>
+                                    <img src="${StockApp.data.currentQRData.canvas.toDataURL()}" />
+                                    <p><small>Généré le ${new Date().toLocaleString('fr-FR')}</small></p>
+                                </body>
+                            </html>
+                        `);
+                        printWindow.document.close();
+                        printWindow.print();
+                    }
+                },
+                async startScanner() {
+                    try {
+                        const videoElement = document.getElementById('qr-video');
+                        const placeholder = document.getElementById('scanner-placeholder');
+                        const startBtn = document.getElementById('startScanBtn');
+                        const stopBtn = document.getElementById('stopScanBtn');
+
+                        videoElement.style.display = 'block';
+                        placeholder.style.display = 'none';
+                        startBtn.style.display = 'none';
+                        stopBtn.style.display = 'inline-block';
+
+                        StockApp.data.qrScanner = new QrScanner(videoElement, result => {
+                            try {
+                                const data = JSON.parse(result.data);
+                                if (data.platform === 'Stock Management Pro' || data.platform === 'Stock Management') {
+                                    StockApp.qr.handleScanned(data);
+                                } else {
+                                    StockApp.utils.showNotification('QR Code non reconnu pour cette plateforme', 'warning');
+                                }
+                            } catch (e) {
+                                StockApp.utils.showNotification('QR Code invalide', 'error');
+                            }
+                        }, {
+                            returnDetailedScanResult: true,
+                            highlightScanRegion: true,
+                            highlightCodeOutline: true
+                        });
+
+                        await StockApp.data.qrScanner.start();
+                        StockApp.utils.showNotification('Scanner QR activé', 'success');
+                    } catch (error) {
+                        StockApp.utils.showNotification('Erreur d\'accès à la caméra: ' + error.message, 'error');
+                        StockApp.qr.stopScanner();
+                    }
+                },
+                stopScanner() {
+                    if (StockApp.data.qrScanner) {
+                        StockApp.data.qrScanner.stop();
+                        StockApp.data.qrScanner.destroy();
+                        StockApp.data.qrScanner = null;
+                    }
+
+                    const videoElement = document.getElementById('qr-video');
+                    const placeholder = document.getElementById('scanner-placeholder');
+                    const startBtn = document.getElementById('startScanBtn');
+                    const stopBtn = document.getElementById('stopScanBtn');
+                    const scanResult = document.getElementById('scanResult');
+
+                    videoElement.style.display = 'none';
+                    placeholder.style.display = 'block';
+                    startBtn.style.display = 'inline-block';
+                    stopBtn.style.display = 'none';
+                    scanResult.style.display = 'none';
+                    StockApp.utils.showNotification('Scanner QR arrêté', 'success');
+                },
+                handleScanned(data) {
+                    StockApp.data.currentScannedData = data;
+                    const scanResult = document.getElementById('scanResult');
+                    const scannedItem = document.getElementById('scannedItem');
+
+                    scannedItem.innerHTML = `
+                        <strong>${data.item}</strong><br>
+                        Catégorie: ${data.category}<br>
+                        <small>Scanné le: ${new Date().toLocaleString('fr-FR')}</small>
+                    `;
+                    scanResult.style.display = 'block';
+                    StockApp.qr.stopScanner();
+                    StockApp.utils.showNotification('Article scanné avec succès!', 'success');
+                },
+                returnScannedItem() {
+                    if (!StockApp.data.currentScannedData) return;
+                    const { category, item } = StockApp.data.currentScannedData;
+                    StockApp.catalog.openReturnModal(category, item);
+                    setTimeout(() => {
+                        document.getElementById('returnReason').value = 'Retour via scan QR';
+                    }, 100);
+                }
+            },
+
+            // Admin functions
+            admin: {
+                exportData() {
+                    const data = {
+                        stock: StockApp.data.stock,
+                        transactions: StockApp.data.transactions,
+                        users: StockApp.data.users.map(u => ({ username: u.username, role: u.role })),
+                        exportDate: new Date().toISOString()
+                    };
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `stock_export_${new Date().toISOString().split('T')[0]}.json`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    StockApp.utils.showNotification('Données exportées avec succès!', 'success');
+                },
+                importData() {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = function(e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                try {
+                                    const data = JSON.parse(e.target.result);
+                                    if (data.stock && data.transactions) {
+                                        StockApp.data.stock = data.stock;
+                                        StockApp.data.transactions = data.transactions;
+                                        if (data.users) {
+                                            data.users.forEach(importedUser => {
+                                                const existingUser = StockApp.data.users.find(u => u.username === importedUser.username);
+                                                if (!existingUser) {
+                                                    StockApp.data.users.push({ ...importedUser, password: 'changeme123' });
+                                                }
+                                            });
+                                        }
+                                        StockApp.utils.saveData();
+                                        StockApp.dashboard.load();
+                                        StockApp.utils.showNotification('Données importées avec succès!', 'success');
+                                    } else {
+                                        StockApp.utils.showNotification('Format de fichier invalide', 'error');
+                                    }
+                                } catch (error) {
+                                    StockApp.utils.showNotification('Erreur lors de l\'importation: ' + error.message, 'error');
+                                }
+                            };
+                            reader.readAsText(file);
+                        }
+                    };
+                    input.click();
+                },
+                resetStock() {
+                    if (confirm('Êtes-vous sûr de vouloir réinitialiser tout le stock? Cette action est irréversible.')) {
+                        StockApp.data.stock = JSON.parse(JSON.stringify(StockApp.data.initialStock));
+                        StockApp.data.transactions = [];
+                        StockApp.utils.saveData();
+                        StockApp.dashboard.load();
+                        StockApp.utils.showNotification('Stock réinitialisé!', 'warning');
+                    }
+                },
+                openAddProductModal() {
+                    StockApp.filters.load(); // Reload categories
+                    document.getElementById('addProductModal').classList.add('active');
+                },
+                confirmAddProduct() {
+                    const category = document.getElementById('newProductCategory').value;
+                    const name = document.getElementById('newProductName').value.trim();
+                    const quantity = parseInt(document.getElementById('newProductQuantity').value);
+                    const maxQuantity = parseInt(document.getElementById('newProductMaxQuantity').value);
+                    const image = document.getElementById('newProductImage').value.trim() || `https://placehold.co/280x120?text=${encodeURIComponent(name)}`;
+
+                    if (!category || !name || isNaN(quantity) || isNaN(maxQuantity) || maxQuantity < 1) {
+                        StockApp.utils.showNotification('Veuillez remplir tous les champs correctement', 'error');
+                        return;
+                    }
+
+                    if (!StockApp.data.stock[category]) {
+                        StockApp.utils.showNotification('Catégorie invalide', 'error');
+                        return;
+                    }
+
+                    if (StockApp.data.stock[category].find(i => i.name === name)) {
+                        StockApp.utils.showNotification('Produit existe déjà dans cette catégorie', 'error');
+                        return;
+                    }
+
+                    if (quantity > maxQuantity) {
+                        StockApp.utils.showNotification('Quantité initiale ne peut pas dépasser la quantité maximale', 'error');
+                        return;
+                    }
+
+                    StockApp.data.stock[category].push({
+                        name,
+                        quantity,
+                        max_quantity: maxQuantity,
+                        image
+                    });
+
+                    StockApp.data.transactions.unshift({
+                        user: StockApp.data.currentUser,
+                        item: name,
+                        category,
+                        quantity,
+                        date: new Date().toLocaleString('fr-FR'),
+                        action: 'added',
+                        reason: 'Nouveau produit ajouté'
+                    });
+
+                    StockApp.utils.saveData();
+                    StockApp.dashboard.load();
+                    StockApp.ui.closeModal();
+                    StockApp.utils.showNotification('Produit ajouté avec succès!', 'success');
+                },
+                openManageUsersModal() {
+                    const userList = document.getElementById('userList');
+                    userList.innerHTML = '';
+
+                    StockApp.data.users.forEach(user => {
+                        const userItem = document.createElement('div');
+                        userItem.className = 'user-item';
+                        userItem.innerHTML = `
+                            <span>${user.username} (${user.role})</span>
+                            <div class="user-actions">
+                                <button class="btn btn-small btn-warning" onclick="StockApp.admin.changeUserRole('${user.username}')">Changer Rôle</button>
+                                <button class="btn btn-small btn-danger" onclick="StockApp.admin.deleteUser('${user.username}')">Supprimer</button>
+                            </div>
+                        `;
+                        userList.appendChild(userItem);
+                    });
+
+                    document.getElementById('manageUsersModal').classList.add('active');
+                },
+                changeUserRole(username) {
+                    const newRole = prompt('Nouveau rôle (user ou admin):', 'user');
+                    if (newRole !== 'user' && newRole !== 'admin') {
+                        StockApp.utils.showNotification('Rôle invalide', 'error');
+                        return;
+                    }
+
+                    const user = StockApp.data.users.find(u => u.username === username);
+                    if (user) {
+                        user.role = newRole;
+                        StockApp.utils.saveData();
+                        StockApp.utils.showNotification('Rôle mis à jour', 'success');
+                        StockApp.admin.openManageUsersModal(); // Reload modal
+                    }
+                },
+                deleteUser(username) {
+                    if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${username}?`)) {
+                        StockApp.data.users = StockApp.data.users.filter(u => u.username !== username);
+                        StockApp.utils.saveData();
+                        StockApp.utils.showNotification('Utilisateur supprimé', 'success');
+                        StockApp.admin.openManageUsersModal(); // Reload modal
+                    }
+                }
+            },
+
+            // UI functions
+            ui: {
+                showTab(tabName) {
+                    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                    document.getElementById(tabName + 'Tab').classList.add('active');
+                    event.target.classList.add('active');
+                    if (tabName !== 'scanner' && StockApp.data.qrScanner) {
+                        StockApp.qr.stopScanner();
+                    }
+                },
+                closeModal() {
+                    document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('active'));
+                }
+            },
+
+            // Initialize application
+            init() {
+                document.addEventListener('DOMContentLoaded', () => {
+                    const savedUser = localStorage.getItem('currentUser');
+                    if (savedUser) {
+                        StockApp.data.currentUser = savedUser;
+                        StockApp.data.currentRole = localStorage.getItem('currentRole');
+                        document.getElementById('loginSection').style.display = 'none';
+                        document.getElementById('dashboardSection').classList.add('active');
+                        document.getElementById('currentUser').textContent = savedUser;
+                        document.getElementById('currentRole').textContent = StockApp.data.currentRole.toUpperCase();
+                        if (StockApp.data.currentRole === 'admin') {
+                            document.getElementById('adminPanel').style.display = 'block';
+                        }
+                        StockApp.dashboard.load();
+                    }
+                });
+
+                document.addEventListener('click', e => {
+                    if (e.target.classList.contains('modal')) {
+                        StockApp.ui.closeModal();
+                    }
+                });
+
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Escape') {
+                        StockApp.ui.closeModal();
+                        if (StockApp.data.qrScanner) {
+                            StockApp.qr.stopScanner();
+                        }
+                    }
+                });
+            }
+        };
+
+        // Start the application
+        StockApp.init();
+    </script>
+</body>
+</html>
